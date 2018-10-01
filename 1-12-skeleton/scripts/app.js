@@ -2,7 +2,8 @@
 (function() {
   'use strict';
 
-  var weatherAPIUrlBase = 'https://publicdata-weather.firebaseio.com/';
+  var weatherAPIUrlBase = 'http://localhost:9800/';
+//  var weatherAPIUrlBase = 'https://publicdata-weather.firebaseio.com/';
 
   var app = {
     isLoading: true,
@@ -15,6 +16,72 @@
     daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   };
 
+  var injectedForecast = {
+    key: 'newyork',
+    label: 'New York, NY',
+    currently: {
+        time: 1453489481,
+        summary: 'Clear',
+        icon: 'partly-cloudy-day',
+        temperature: 52.74,
+        apparentTemperature: 74.34,
+        precipProbability: 0.20,
+        humidity: 0.77,
+        windBearing: 125,
+        windSpeed: 1.52
+    },
+    daily: {
+        data: [
+            {icon: 'clear-day', temperatureMax: 55, temperatureMin: 34},
+            {icon: 'rain', temperatureMax: 55, temperatureMin: 34},
+            {icon: 'snow', temperatureMax: 55, temperatureMin: 34},
+            {icon: 'sleet', temperatureMax: 55, temperatureMin: 34},
+            {icon: 'fog', temperatureMax: 55, temperatureMin: 34},
+            {icon: 'wind', temperatureMax: 55, temperatureMin: 34},
+            {icon: 'partly-cloudy-day', temperatureMax: 55, temperatureMin: 34}
+        ]
+    }
+  };
+
+  /* initiate local storage */
+     var db;
+
+    (function openDb(){
+        let request = indexedDB.open("weather_user_data",1);
+
+        request.onerror = function(e) {
+          alert("Why didn't you allow my web app to use IndexedDB?!");
+        };
+        request.onupgradeneeded = function(e) {
+            let db_temp = this.result,
+            store = db_temp.createObjectStore("cities", { keyPath: "key" });
+        };
+        request.onsuccess = function(e){
+            db = this.result;
+            console.log('openDb DONE');
+        };
+    })();
+
+    function addCities(item){
+        var tx = db.transaction("cities", "readwrite");
+        var store = tx.objectStore("cities");
+        var req = store.add(item);
+
+        req.onsuccess = function(e){
+            console.log("Saved city: ", item);
+        };
+    };
+
+    function getCities(){
+        var tx = db.transaction("cities", "readonly");
+        var store = tx.objectStore("cities");
+        var req = store.getAll();
+
+        req.onsuccess = function(e){
+            console.log("Grabbing Saved Cities", e);
+        };
+
+    };
 
   /*****************************************************************************
    *
@@ -41,6 +108,7 @@
     var label = selected.textContent;
     app.getForecast(key, label);
     app.selectedCities.push({key: key, label: label});
+    addCities({key: key, label: label});
     app.toggleAddDialog(false);
   });
 
@@ -145,9 +213,22 @@
   // Iterate all of the cards and attempt to get the latest forecast data
   app.updateForecasts = function() {
     var keys = Object.keys(app.visibleCards);
+    if (keys.length === 0) {
+//        if (getCities()){
+//            getCities().forEach(function(city){
+//                app.getForecast(key);
+//            });
+//        }
+//        else{
+        app.updateForecastCard(injectedForecast);
+//        }
+    }
     keys.forEach(function(key) {
       app.getForecast(key);
     });
   };
 
+  app.updateForecasts();
+//  getCities();
+  console.log(db)
 })();

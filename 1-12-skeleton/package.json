@@ -1,0 +1,12 @@
+{
+  "name": "weather-server",
+  "version": "1.0.0",
+  "description": "ud811 Weather PWA",
+
+  "scripts": {
+    "weather-server": "node forecast-io_proxy.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "private": true
+}
